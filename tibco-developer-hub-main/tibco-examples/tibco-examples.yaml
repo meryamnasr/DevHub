@@ -4,6 +4,7 @@ metadata:
   name: example-templates-locations
 spec:
   targets:
+    - ./template-user-group/catalog-info.yaml
     - ./bwce-bookstore-template/bwce-bookstore-template.yaml
     - ./docs-system/catalog-info.yaml
     - ./docs-template/docs-template.yaml
