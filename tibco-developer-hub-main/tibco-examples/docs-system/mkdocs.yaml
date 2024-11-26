@@ -1,0 +1,8 @@
+site_name: 'document-generation-system'
+site_description: 'document-generation-system'
+
+nav:
+  - Introduction: index.md
+
+plugins:
+  - techdocs-core
