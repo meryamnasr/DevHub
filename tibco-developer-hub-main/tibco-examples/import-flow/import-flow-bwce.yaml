@@ -44,12 +44,6 @@ spec:
             allowedKinds:
               - Group
 
-# The import flow consist out of 4 steps:
-# 1. Fetch the project from GitHub
-# 2. Generate the Component YAML
-# 3. Commit the Component YAML file back to the GitHub project branch creating a pull request
-# 4. Register the Component in the catalog
-
   steps:
     - id: fetch
       name: Fetch project
@@ -65,45 +59,23 @@ spec:
         extractParameters:
           bwce_project_name:
             type: xml
-            filePath: ${{ parameters.application + "/" + parameters.application + ".application/.project" }}
-            # For xml type extractParameters both json path and xpath are supported
-            # jsonPath: $.projectDescription.name
+            filePath: ${{ parameters.application + ".application/.project" }}
             xPath: string(/projectDescription/name)
           bwce_project_description:
             type: xml
-            filePath: ${{ parameters.application + "/" + parameters.application + ".application/.project" }}
-            # For xml type extractParameters both json path and xpath are supported
-            # jsonPath: $.projectDescription.comment
+            filePath: ${{ parameters.application + ".application/.project" }}
             xPath: string(/projectDescription/comment)
-
-# extractParameters type json, file and workspace also supported
-#          example_parameter1:
-#            type: json
-#            filePath: <File path>
-#            jsonPath: <Json path>
-#          example_parameter2:
-#            type: file
-#            filePath: <File path>
-#            regex: <Regex>
-#          example_parameter3:
-#            type: workspace
-#            onlyName: true
-#            directoryPath: <Directory path>
-#            regex: <Regex>
 
     - id: crateYaml
       name: Create YAML
       action: tibco:create-yaml
       input:
-# Add application name
-        outputFile: ${{  parameters.application + '/'+ parameters.application + "-bwce-catalog-info.yaml" }}
- #      outputFile: "bwce-catalog-info.yaml"
+        outputFile: ${{ parameters.application + '/' + parameters.application + "-bwce-catalog-info.yaml" }}
         outputStructure:
           apiVersion: backstage.io/v1alpha1
           kind: Component
           metadata:
-# Output of the Extract Parameters action step will always be an array, so we are using first item from the array
-            name: ${{ steps.extract.output.bwce_project_name[0]}}
+            name: ${{ steps.extract.output.bwce_project_name[0] }}
             description: ${{ steps.extract.output.bwce_project_description[0] }}
             tags:
               - bwce
@@ -118,18 +90,6 @@ spec:
             lifecycle: production
             owner: ${{ parameters.owner }}
 
-# The import flow debug step, enable it for debugging
-
-#   - id: Log Debug
-#     name: Debug Log
-#     action: debug:log
-#     input:
-#       message: "Fetched the BWCE Skeleton template"
-#       listWorkspace: true
-#       bwce_project_name: ${{ steps.extract.output.bwce_project_name[0] }}
-#       bwce_project_description: ${{ steps.extract.output.bwce_project_description[0] }}
-#       repoUrl: ${{ parameters.repoUrl }}
-
     - id: cpr
       name: Create Pull Request in Current Repo
       action: publish:github:pull-request
@@ -140,26 +100,14 @@ spec:
         title: ${{ parameters.application }}
         description: This PR adds a Component YAML to this Repository.
 
-# Optionally you can leave this step out, if your developer hub synchronize with the GitHub organization
-# When the pull request is merged, the component will be registered by the GitHub catalog provider, below is the example configuration
-# catalog:
-#   providers:
-#     github:
-#       providerId:
-#         organization: '<organization>'
-#         catalogPath: '**/*catalog-info.yaml'
-#         schedule:
-#           frequency: { minutes: 30 }
-
     - id: register
       name: Register
       action: catalog:register
       input:
-        catalogInfoUrl: ${{ "https://"  + (parameters.repoUrl | parseRepoUrl).host + "/" + (parameters.repoUrl | parseRepoUrl).owner + "/" +  (parameters.repoUrl | parseRepoUrl).repo + "/blob/" + parameters.application.replace("/", ".") + "/" + parameters.application + "/" + parameters.application +"-bwce-catalog-info.yaml" }}
+        catalogInfoUrl: ${{ "https://"  + (parameters.repoUrl | parseRepoUrl).host + "/" + (parameters.repoUrl | parseRepoUrl).owner + "/" +  (parameters.repoUrl | parseRepoUrl).repo + "/blob/" + parameters.application.replace("/", ".") + "/" + parameters.application + "/" + parameters.application + "-bwce-catalog-info.yaml" }}
 
   output:
     links:
-# If you are not using register step above, remove the below Open in catalog link.
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
